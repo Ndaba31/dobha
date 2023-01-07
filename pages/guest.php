@@ -7,6 +7,6 @@
     <i class="fa-solid fa-user"></i>
     <p id="comment"></p>
     <script>
-        $("#comment").append("comment");
+        $("#comment").append("Hey Heave");
     </script>
 </body>
