@@ -1,15 +1,68 @@
+<?php 
+    include('connect.php');
+
+    //Get All Categories From Database
+	$categories_query = "SELECT merchandise.category AS category_id, 
+                         categories.category AS category, 
+                         COUNT(*) AS num_products,
+                         categories.image AS category_image 
+                         FROM merchandise, categories 
+                         WHERE categories.id = merchandise.category 
+                         GROUP BY category";
+    $categories_result = $con->query($categories_query);
+    $categories_error = false;
+
+    if ($categories_result->num_rows < 1) {
+        $categories_error = true;
+    } else {
+        $categories_error = false;
+    }
+
+    //Get Product Specified By User From Database    
+    if (isset($_POST["get_product"])) {
+        $product_id = (int)$_GET["product"];
+        $vendor_id = $_POST["vendor_id"];
+        $products_query = "SELECT merchandise.seller as vendor_id, 
+                                first_name, last_name, merchandise.merch_id as product_id, 
+                                name, description, categories.category as category, 
+                                color, size, price, 
+                                `condition` as quality, 
+                                merchandise.gender as gender, 
+                                age_group, gallery.image as image 
+                          FROM merchandise, users, categories, gallery 
+                          WHERE merchandise.seller = users.phone 
+                          AND merchandise.merch_id = gallery.merch_id 
+                          AND merchandise.seller = gallery.seller 
+                          AND categories.id = merchandise.category 
+                          AND merchandise.merch_id = $product_id 
+                          AND merchandise.seller = $vendor_id 
+                          AND user_type = 'vendor'";
+
+        $products_result = $con->query($products_query);
+            
+        $products_error = false;
+        if ($products_result->num_rows) {
+            $products_error = true;
+        } else {
+            $products_error = false;
+        }
+
+        $product = $products_result->fetch_assoc();
+
+    }
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8">
-    <title>MultiShop - Online Shop Website Template</title>
+    <title> <?= $product["name"] ?> </title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="Free HTML Templates" name="keywords">
-    <meta content="Free HTML Templates" name="description">
+    <!-- <meta content="Free HTML Templates" name="keywords">
+    <meta content="Free HTML Templates" name="description"> -->
 
     <!-- Favicon -->
-    <link href="img/favicon.ico" rel="icon">
+    <link href="img/dobhapp.ico" rel="icon">
 
     <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -79,8 +132,8 @@
         <div class="row align-items-center bg-light py-3 px-xl-5 d-none d-lg-flex">
             <div class="col-lg-4">
                 <a href="" class="text-decoration-none">
-                    <span class="h1 text-uppercase text-primary bg-dark px-2">Multi</span>
-                    <span class="h1 text-uppercase text-dark bg-primary px-2 ml-n1">Shop</span>
+                    <span class="h1 text-uppercase text-primary bg-dark px-2">Dobh</span>
+                    <span class="h1 text-uppercase text-dark bg-primary px-2 ml-n1">App</span>
                 </a>
             </div>
             <div class="col-lg-4 col-6 text-left">
@@ -115,30 +168,23 @@
                 <nav class="collapse position-absolute navbar navbar-vertical navbar-light align-items-start p-0 bg-light" id="navbar-vertical" style="width: calc(100% - 30px); z-index: 999;">
                     <div class="navbar-nav w-100">
                         <div class="nav-item dropdown dropright">
-                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dresses <i class="fa fa-angle-right float-right mt-1"></i></a>
-                            <div class="dropdown-menu position-absolute rounded-0 border-0 m-0">
-                                <a href="" class="dropdown-item">Men's Dresses</a>
-                                <a href="" class="dropdown-item">Women's Dresses</a>
-                                <a href="" class="dropdown-item">Baby's Dresses</a>
-                            </div>
-                        </div>
-                        <a href="" class="nav-item nav-link">Shirts</a>
-                        <a href="" class="nav-item nav-link">Jeans</a>
-                        <a href="" class="nav-item nav-link">Swimwear</a>
-                        <a href="" class="nav-item nav-link">Sleepwear</a>
-                        <a href="" class="nav-item nav-link">Sportswear</a>
-                        <a href="" class="nav-item nav-link">Jumpsuits</a>
-                        <a href="" class="nav-item nav-link">Blazers</a>
-                        <a href="" class="nav-item nav-link">Jackets</a>
-                        <a href="" class="nav-item nav-link">Shoes</a>
+                            <?php
+                                if ($categories_error) {
+                            ?>
+                                <a href="#" class="nav-item nav-link">No Categories To Show</a>
+                            <?php } else {
+                                while ($category = $categories_result->fetch_assoc()) {
+                            ?>
+                                <a href=<?= "shop.php?category=" . $category["category_id"] ?> class="nav-item nav-link"><?= $category["category"] ?></a>								
+                            <?php }} ?>	
                     </div>
                 </nav>
             </div>
             <div class="col-lg-9">
                 <nav class="navbar navbar-expand-lg bg-dark navbar-dark py-3 py-lg-0 px-0">
                     <a href="" class="text-decoration-none d-block d-lg-none">
-                        <span class="h1 text-uppercase text-dark bg-light px-2">Multi</span>
-                        <span class="h1 text-uppercase text-light bg-primary px-2 ml-n1">Shop</span>
+                        <span class="h1 text-uppercase text-dark bg-light px-2">Dobh</span>
+                        <span class="h1 text-uppercase text-light bg-primary px-2 ml-n1">App</span>
                     </a>
                     <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
                         <span class="navbar-toggler-icon"></span>
@@ -147,7 +193,6 @@
                         <div class="navbar-nav mr-auto py-0">
                             <a href="index.html" class="nav-item nav-link">Home</a>
                             <a href="shop.html" class="nav-item nav-link">Shop</a>
-                            <a href="detail.html" class="nav-item nav-link active">Shop Detail</a>
                             <div class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Pages <i class="fa fa-angle-down mt-1"></i></a>
                                 <div class="dropdown-menu bg-primary rounded-0 border-0 m-0">
@@ -220,21 +265,22 @@
 
             <div class="col-lg-7 h-auto mb-30">
                 <div class="h-100 bg-light p-30">
-                    <h3>Product Name Goes Here</h3>
+                    <h3> <?= $product["name"] ?> </h3>
                     <div class="d-flex mb-3">
                         <div class="text-primary mr-2">
-                            <small class="fas fa-star"></small>
-                            <small class="fas fa-star"></small>
-                            <small class="fas fa-star"></small>
-                            <small class="fas fa-star-half-alt"></small>
-                            <small class="far fa-star"></small>
+                            <?php 
+                                for ($j=0; $j < ceil((float)$product["quality"]); $j++) { 
+                                    if((fmod((float)$product["quality"], 1) !== 0.00) && ($j == ceil((float)$product["quality"]) - 1)) {
+                            ?>	
+                                        <small class="fa fa-star-half-alt text-primary mr-1"></small>
+                            <?php } else { ?>
+                                        <small class="fa fa-star text-primary mr-1"></small>
+                            <?php }} ?>
                         </div>
                         <small class="pt-1">(99 Reviews)</small>
                     </div>
-                    <h3 class="font-weight-semi-bold mb-4">$150.00</h3>
-                    <p class="mb-4">Volup erat ipsum diam elitr rebum et dolor. Est nonumy elitr erat diam stet sit
-                        clita ea. Sanc ipsum et, labore clita lorem magna duo dolor no sea
-                        Nonumy</p>
+                    <h3 class="font-weight-semi-bold mb-4"> E<?= number_format((float)$product["price"], 2, '.', '') ?> </h3>
+                    <p class="mb-4"><?= $product["description"] ?></p>
                     <div class="d-flex mb-3">
                         <strong class="text-dark mr-3">Sizes:</strong>
                         <form>

@@ -2,7 +2,13 @@
 	include("connect.php");
 
 	//Get All Categories From Database
-	$categories_query = "SELECT category, image FROM categories";
+	$categories_query = "SELECT merchandise.category AS category_id, 
+						 categories.category AS category, 
+						 COUNT(*) AS num_products,
+						 categories.image AS category_image 
+						 FROM merchandise, categories 
+						 WHERE categories.id = merchandise.category 
+						 GROUP BY category";
 	$categories_result = $con->query($categories_query);
 	$categories_error = false;
 
@@ -22,7 +28,7 @@
 						AND merchandise.category = categories.id 
 						AND gallery.merch_id = merchandise.merch_id
 						AND users.phone = merchandise.seller
-						AND user_type = 'customer'";
+						AND user_type = 'vendor'";
 	$products_result = $con->query($products_query);
 	$products_error = false;
 
@@ -35,7 +41,7 @@
 	//Get All Vendors From Database
 	$vendors_query = "SELECT phone, first_name, last_name, photo 
 					  FROM users 
-					  WHERE user_type = 'customer'";
+					  WHERE user_type = 'vendor'";
 	$vendors_result = $con->query($vendors_query);
 	$vendors_error = false;
 
@@ -207,11 +213,11 @@
 							<?php
 								if ($categories_error) {
 							?>
-								<a href="" class="nav-item nav-link">No Categories To Show</a>
+								<a href="#" class="nav-item nav-link">No Categories To Show</a>
 							<?php } else {
 								while ($category = $categories_result->fetch_assoc()) {
 							?>
-								<a href="" class="nav-item nav-link"><?= $category["category"] ?></a>								
+                                <a href=<?= "shop.php?category=" . $category["category_id"] ?> class="nav-item nav-link"><?= $category["category"] ?></a>								
 							<?php }} ?>				
 						</div>
 					</nav>
@@ -237,9 +243,8 @@
 							id="navbarCollapse"
 						>
 							<div class="navbar-nav mr-auto py-0">
-								<a href="index.html" class="nav-item nav-link active">Home</a>
-								<a href="shop.html" class="nav-item nav-link">Shop</a>
-								<a href="detail.html" class="nav-item nav-link">Shop Detail</a>
+								<a href="#" class="nav-item nav-link active">Home</a>
+								<a href="shop.php" class="nav-item nav-link">Shop</a>
 								<div class="nav-item dropdown">
 									<a
 										href="#"
@@ -453,14 +458,20 @@
 							$all_categories = $categories_result->fetch_assoc();
 				?>
 							<div class="col-lg-3 col-md-4 col-sm-6 pb-1">
-								<a class="text-decoration-none" href="">
+								<a class="text-decoration-none" href=<?= "shop.php?category=" . $all_categories["category_id"] ?>>
 									<div class="cat-item img-zoom d-flex align-items-center mb-4">
 										<div class="overflow-hidden" style="width: 100px; height: 100px">
-											<img class="img-fluid" src=<?= $all_categories["image"] ?> alt="<?= $all_categories["category"] ?>" />
+											<img class="img-fluid" src=<?= $all_categories["category_image"] ?> alt="<?= $all_categories["category"] ?>" />
 										</div>
 										<div class="flex-fill pl-3">
 											<h6><?= $all_categories["category"] ?></h6>
-											<small class="text-body">100 Products</small>
+											<?php 
+												if ($all_categories["num_products"] == 1) {
+											?>	
+													<small class="text-body">1 Product</small>
+											<?php } else {	?>
+													<small class="text-body"> <?= $all_categories["num_products"] ?>  Products</small>
+											<?php } ?>
 										</div>
 									</div>
 								</a>
@@ -630,7 +641,10 @@
 							?>
 								<div class="bg-light px-4 pt-2" style="display: flex; flex-direction: column; align-items: center; height: 180px; width: 180px;">
 									<img style="width: 100%; height: 80%;" src=<?= $vendor["photo"] ?> alt="<?= $vendor["first_name"] ?> <?= $vendor["last_name"] ?>" />
-									<a class="h6 text-decoration-none text-truncate pt-2"><?= $vendor["first_name"] ?> <?= $vendor["last_name"] ?></a>
+									<form action="shop.php" method="post">
+										<input type="number" style="display: none;" name="vendor_id" value=<?= $vendor["phone"] ?>>
+										<button type="submit" style="border: none;" name="get_vendor_products"><a class="h6 text-decoration-none text-truncate pt-2"><?= $vendor["first_name"] ?> <?= $vendor["last_name"] ?></a></button>
+									</form>
 								</div>								
 						<?php }} ?>					
 					</div>
