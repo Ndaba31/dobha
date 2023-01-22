@@ -45,7 +45,36 @@
                            AND users.phone = merchandise.seller
                            AND users.phone = $vendor_id
                            AND user_type = 'vendor'";
-    } else {
+    } else if (isset($_GET["age"])) {
+        $age_group = $_GET["age"];
+        
+        if (isset($_GET["sex"])) {
+            $sex = $_GET["sex"];
+            $products_query = "SELECT merchandise.seller AS vendor_id, first_name, last_name, 
+                                      merchandise.merch_id AS product_id, name, description, 
+                                      categories.category AS category, color, size, price, `condition` as quality, 
+                                      merchandise.gender AS gender, age_group, gallery.image as image 
+                               FROM merchandise, gallery, categories, users 
+                               WHERE gallery.seller = merchandise.seller 
+                               AND merchandise.category = categories.id 
+                               AND gallery.merch_id = merchandise.merch_id
+                               AND users.phone = merchandise.seller
+                               AND merchandise.gender = '$sex'
+                               AND age_group = '$age_group'";
+        } else {
+            $products_query = "SELECT merchandise.seller AS vendor_id, first_name, last_name, 
+                                      merchandise.merch_id AS product_id, name, description, 
+                                      categories.category AS category, color, size, price, `condition` as quality, 
+                                      merchandise.gender AS gender, age_group, gallery.image as image 
+                               FROM merchandise, gallery, categories, users 
+                               WHERE gallery.seller = merchandise.seller 
+                               AND merchandise.category = categories.id 
+                               AND gallery.merch_id = merchandise.merch_id
+                               AND users.phone = merchandise.seller
+                               AND age_group = '$age_group'";
+        }
+
+    }  else {
         $products_query = "SELECT merchandise.seller AS vendor_id, first_name, last_name, 
                                   merchandise.merch_id AS product_id, name, description, 
                                   categories.category AS category, color, size, price, `condition` as quality, 

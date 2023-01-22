@@ -1,5 +1,6 @@
 <?php 
 	include("connect.php");
+	session_start();
 
 	//Get All Categories From Database
 	$categories_query = "SELECT merchandise.category AS category_id, 
@@ -38,6 +39,21 @@
 		$products_error = false;
 	}
 
+	$products_array = [];
+	$display_products = [];
+	for ($i=0; $i < $products_result->num_rows; $i++) { 
+		$products_result->data_seek($i);
+		$pdct = $products_result->fetch_assoc();
+
+		if (!in_array(array($pdct["vendor_id"], $pdct["product_id"]), $products_array)) {
+			array_push($products_array, array($pdct["vendor_id"], $pdct["product_id"]));
+			array_push($display_products, array($pdct["vendor_id"], $pdct["product_id"], $pdct["first_name"], $pdct["last_name"], $pdct["name"], $pdct["description"], $pdct["category"], $pdct["color"], $pdct["size"], $pdct["price"], $pdct["quality"], $pdct["gender"], $pdct["age_group"], $pdct["image"]));
+		} else {
+			$key = array_search(array($pdct["vendor_id"], $pdct["product_id"]), $products_array);
+			unset($products_array[$key]);
+		}
+	}
+
 	//Get All Vendors From Database
 	$vendors_query = "SELECT phone, first_name, last_name, photo 
 					  FROM users 
@@ -49,6 +65,17 @@
 		$vendors_error = true;
 	} else {
 		$vendors_error = false;
+	}
+
+	//Get 2 Discounts
+	$discount_query = "SELECT seller, merch_id, discount FROM discount LIMIT 2";
+	$discount_result = $con->query($discount_query);
+	$discount_error = false;
+
+	if ($discount_result) {
+		$discount_error = true;
+	} else {
+		$discount_error = false;
 	}
 ?>
 <!DOCTYPE html>
@@ -327,7 +354,7 @@
 										</p>
 										<a
 											class="btn btn-outline-light py-2 px-4 mt-3 animate__animated animate__fadeInUp"
-											href="#"
+											href="shop.php?sex=M&age=adult"
 											>Shop Now</a
 										>
 									</div>
@@ -354,7 +381,7 @@
 										</p>
 										<a
 											class="btn btn-outline-light py-2 px-4 mt-3 animate__animated animate__fadeInUp"
-											href="#"
+											href="shop.php?sex=F&age=adult"
 											>Shop Now</a
 										>
 									</div>
@@ -381,7 +408,7 @@
 										</p>
 										<a
 											class="btn btn-outline-light py-2 px-4 mt-3 animate__animated animate__fadeInUp"
-											href="#"
+											href="shop.php?age=kids"
 											>Shop Now</a
 										>
 									</div>
@@ -391,22 +418,44 @@
 					</div>
 				</div>
 				<div class="col-lg-4">
-					<div class="product-offer mb-30" style="height: 200px">
-						<img class="img-fluid" src="img/offer-1.jpg" alt="" />
-						<div class="offer-text">
-							<h6 class="text-white text-uppercase">Save 20%</h6>
-							<h3 class="text-white mb-3">Special Offer</h3>
-							<a href="" class="btn btn-primary">Shop Now</a>
-						</div>
-					</div>
-					<div class="product-offer mb-30" style="height: 200px">
-						<img class="img-fluid" src="img/offer-2.jpg" alt="" />
-						<div class="offer-text">
-							<h6 class="text-white text-uppercase">Save 20%</h6>
-							<h3 class="text-white mb-3">Special Offer</h3>
-							<a href="" class="btn btn-primary">Shop Now</a>
-						</div>
-					</div>
+					<?php 
+						for ($i=0; $i < $discount_result->num_rows; $i++) { 
+							$discount_result->data_seek($i);
+							$discount = $discount_result->fetch_assoc();
+
+							if ($discount_error) {
+								switch ($i) {
+									case 0:
+					?>		
+										<div class="product-offer mb-30" style="height: 200px">
+											<img class="img-fluid" src="img/offer-1.jpg" alt="" />
+											<div class="offer-text">
+												<h6 class="text-white text-uppercase">Save <?= $discount["discount"] ?>%</h6>
+												<h3 class="text-white mb-3">Special Offer</h3>
+												<a href=<?= "detail.php?product=" . $discount["merch_id"] ?>  class="btn btn-primary">Shop Now</a>
+												<?php $_SESSION["vendor_discount1"] = $discount["seller"]; ?>
+											</div>
+										</div>		
+					<?php
+										break;
+									
+									default:
+					?>
+										<div class="product-offer mb-30" style="height: 200px">
+											<img class="img-fluid" src="img/offer-1.jpg" alt="" />
+											<div class="offer-text">
+												<h6 class="text-white text-uppercase">Save <?= $discount["discount"] ?>%</h6>
+												<h3 class="text-white mb-3">Special Offer</h3>
+												<a href=<?= "detail.php?product=" . $discount["merch_id"] ?>  class="btn btn-primary">Shop Now</a>
+												<?php $_SESSION["vendor_discount2"] = $discount["seller"]; ?>
+											</div>
+										</div>	
+					<?php
+										break;
+								}
+							}
+						}
+					?>			
 				</div>
 			</div>
 		</div>
@@ -491,14 +540,14 @@
 					if ($products_error) {
 						echo "<h1>No Products To Show</h1>";
 					} else {
-						for ($i=0; $i < $products_result->num_rows; $i++) { 
-							$products_result->data_seek($i);
-							$products = $products_result->fetch_assoc();
+						for ($i=0; $i < count($display_products); $i++) { 
+							// $products_result->data_seek($i);
+							// $products = $products_result->fetch_assoc();
 				?>
 						<div class="col-lg-3 col-md-4 col-sm-6 pb-1">
 							<div class="product-item bg-light mb-4">
 								<div class="product-img position-relative overflow-hidden">
-									<img class="img-fluid w-100" style="height: 300px;" src=<?= $products["image"] ?> alt="<?= $products["name"] ?>" />
+									<img class="img-fluid w-100" style="height: 300px;" src=<?= $display_products[$i][13] //product image ?> alt="<?= $display_products[$i][4] //product name ?>" />
 									<div class="product-action">
 										<a class="btn btn-outline-dark btn-square" href=""
 											><i class="fa fa-shopping-cart"></i
@@ -515,16 +564,20 @@
 									</div>
 								</div>
 								<div class="text-center py-4">
-									<a class="h6 text-decoration-none text-truncate" href=""><?= $products["name"] ?></a>
-									<h6 style="color: #88D5D7;"> <?= $products["first_name"] ?> <?= $products["last_name"] ?> </h6>
+									<form action=<?= "detail.php?product=" . $display_products[$i][1] ?> method="post">
+										<input type="number" style="display: none;" name="vendor_id" value=<?= $display_products[$i][0] ?>>
+										<button type="submit" name="get_product" style="border: none; background-color: transparent;"><a class="h6 text-decoration-none text-truncate"><?= $display_products[$i][4] ?></a></button>
+									</form>
+									<h6 style="color: #88D5D7;"> <?= $display_products[$i][2] //first name ?> <?= $display_products[$i][3] //last name ?> </h6>
 									<div class="d-flex align-items-center justify-content-center mt-2">
-										<h5>E<?= number_format((float)$products["price"], 2, '.', '') ?></h5>
-										<h6 class="text-muted ml-2"><del><?= number_format((float)$products["price"], 2, '.', '') ?></del></h6>
+										<h5>E<?= number_format((float)$display_products[$i][9], 2, '.', '') //product price ?></h5>
+										<h6 class="text-muted ml-2"><del><?= number_format((float)$display_products[$i][9], 2, '.', '') //product price ?></del></h6>
 									</div>
 									<div class="d-flex align-items-center justify-content-center mb-1">
 										<?php 
-											for ($j=0; $j < ceil((float)$products["quality"]); $j++) { 
-												if((fmod((float)$products["quality"], 1) !== 0.00) && ($j == ceil((float)$products["quality"]) - 1)) {
+											for ($j=0; $j < ceil((float)$display_products[$i][10]); $j++) { 
+												if((fmod((float)$display_products[$i][10], 1) !== 0.00) && ($j == ceil((float)$display_products[$i][10]) - 1)) {
+													//Above is product quality
 										?>	
 													<small class="fa fa-star-half-alt text-primary mr-1"></small>
 										  <?php } else { ?>
@@ -573,18 +626,18 @@
 				<span class="bg-secondary pr-3">Recent Products</span>
 			</h2>
 			<div class="row px-xl-5">
-			<?php 
+				<?php 
 					if ($products_error) {
 						echo "<h1>No Products To Show</h1>";
 					} else {
-						for ($i=0; $i < $products_result->num_rows; $i++) { 
-							$products_result->data_seek($i);
-							$products = $products_result->fetch_assoc();
+						for ($i=0; $i < count($display_products); $i++) { 
+							// $products_result->data_seek($i);
+							// $products = $products_result->fetch_assoc();
 				?>
 						<div class="col-lg-3 col-md-4 col-sm-6 pb-1">
 							<div class="product-item bg-light mb-4">
 								<div class="product-img position-relative overflow-hidden">
-									<img class="img-fluid w-100" style="height: 300px;" src=<?= $products["image"] ?> alt="<?= $products["name"] ?>" />
+									<img class="img-fluid w-100" style="height: 300px;" src=<?= $display_products[$i][13] //product image ?> alt="<?= $display_products[$i][4] //product name ?>" />
 									<div class="product-action">
 										<a class="btn btn-outline-dark btn-square" href=""
 											><i class="fa fa-shopping-cart"></i
@@ -601,17 +654,20 @@
 									</div>
 								</div>
 								<div class="text-center py-4">
-									<a class="h6 text-decoration-none text-truncate" href=""
-										><?= $products["name"] ?></a
-									>
+									<form action=<?= "detail.php?product=" . $display_products[$i][1] ?> method="post">
+										<input type="number" style="display: none;" name="vendor_id" value=<?= $display_products[$i][0] ?>>
+										<button type="submit" name="get_product" style="border: none; background-color: transparent;"><a class="h6 text-decoration-none text-truncate"><?= $display_products[$i][4] ?></a></button>
+									</form>
+									<h6 style="color: #88D5D7;"> <?= $display_products[$i][2] //first name ?> <?= $display_products[$i][3] //last name ?> </h6>
 									<div class="d-flex align-items-center justify-content-center mt-2">
-										<h5>E<?= number_format((float)$products["price"], 2, '.', '') ?></h5>
-										<h6 class="text-muted ml-2"><del><?= number_format((float)$products["price"], 2, '.', '') ?></del></h6>
+										<h5>E<?= number_format((float)$display_products[$i][9], 2, '.', '') //product price ?></h5>
+										<h6 class="text-muted ml-2"><del><?= number_format((float)$display_products[$i][9], 2, '.', '') //product price ?></del></h6>
 									</div>
 									<div class="d-flex align-items-center justify-content-center mb-1">
 										<?php 
-											for ($j=0; $j < ceil((float)$products["quality"]); $j++) { 
-												if((fmod((float)$products["quality"], 1) !== 0.00) && ($j == ceil((float)$products["quality"]) - 1)) {
+											for ($j=0; $j < ceil((float)$display_products[$i][10]); $j++) { 
+												if((fmod((float)$display_products[$i][10], 1) !== 0.00) && ($j == ceil((float)$display_products[$i][10]) - 1)) {
+													//Above is product quality
 										?>	
 													<small class="fa fa-star-half-alt text-primary mr-1"></small>
 										  <?php } else { ?>
@@ -622,7 +678,7 @@
 								</div>
 							</div>
 						</div>
-				<?php }}	?>
+				<?php }}	?>	
 			</div>
 		</div>
 		<!-- Products End -->

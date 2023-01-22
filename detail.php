@@ -1,5 +1,6 @@
 <?php 
     include('connect.php');
+    session_start();
 
     //Get All Categories From Database
 	$categories_query = "SELECT merchandise.category AS category_id, 
@@ -19,9 +20,25 @@
     }
 
     //Get Product Specified By User From Database    
-    if (isset($_POST["get_product"])) {
+    if (isset($_POST["get_product"]) || isset($_SESSION["vendor_discount1"]) || isset($_SESSION["vendor_discount2"])) {
         $product_id = (int)$_GET["product"];
-        $vendor_id = $_POST["vendor_id"];
+
+        if (isset($_POST["vendor_id"])) {
+
+            $vendor_id = $_POST["vendor_id"];
+
+        } else if (isset($_SESSION["vendor_discount1"])) {
+
+            $vendor_id = $_SESSION["vendor_discount1"];
+            $_SESSION["vendor_discount1"] = null;
+
+        } else if(isset($_SESSION["vendor_discount2"])) {
+
+            $vendor_id = (int)$_SESSION["vendor_discount2"];
+            $_SESSION["vendor_discount2"] = null;
+
+        }
+
         $products_query = "SELECT merchandise.seller as vendor_id, 
                                 first_name, last_name, merchandise.merch_id as product_id, 
                                 name, description, categories.category as category, 
