@@ -2,6 +2,13 @@
 	include("connect.php");
 	session_start();
 
+	/* TODO:	
+		-> FIX DISCOUNT ERRORS BECAUSE THEY ARE NOT CONSISTENTLY PASSING DATA TO DETAIL.PHP
+		-> WORK ON CONTACT PAGE
+		-> WORK ON CHECKOUT PAGE
+		-> WORK ON CART PAGE
+	*/
+
 	//Get All Categories From Database
 	$categories_query = "SELECT merchandise.category AS category_id, 
 						 categories.category AS category, 
@@ -442,7 +449,7 @@
 									default:
 					?>
 										<div class="product-offer mb-30" style="height: 200px">
-											<img class="img-fluid" src="img/offer-1.jpg" alt="" />
+											<img class="img-fluid" src="img/offer-2.jpg" alt="" />
 											<div class="offer-text">
 												<h6 class="text-white text-uppercase">Save <?= $discount["discount"] ?>%</h6>
 												<h3 class="text-white mb-3">Special Offer</h3>
@@ -541,8 +548,6 @@
 						echo "<h1>No Products To Show</h1>";
 					} else {
 						for ($i=0; $i < count($display_products); $i++) { 
-							// $products_result->data_seek($i);
-							// $products = $products_result->fetch_assoc();
 				?>
 						<div class="col-lg-3 col-md-4 col-sm-6 pb-1">
 							<div class="product-item bg-light mb-4">
@@ -564,9 +569,9 @@
 									</div>
 								</div>
 								<div class="text-center py-4">
-									<form action=<?= "detail.php?product=" . $display_products[$i][1] ?> method="post">
-										<input type="number" style="display: none;" name="vendor_id" value=<?= $display_products[$i][0] ?>>
-										<button type="submit" name="get_product" style="border: none; background-color: transparent;"><a class="h6 text-decoration-none text-truncate"><?= $display_products[$i][4] ?></a></button>
+									<form action=<?= "detail.php?product=" . $display_products[$i][1] //product id ?> method="post">
+										<input type="number" style="display: none;" name="vendor_id" value=<?= $display_products[$i][0] //vendor id ?>>
+										<button type="submit" name="get_product" style="border: none; background-color: transparent;"><a class="h6 text-decoration-none text-truncate"><?= $display_products[$i][4] //product name ?></a></button>
 									</form>
 									<h6 style="color: #88D5D7;"> <?= $display_products[$i][2] //first name ?> <?= $display_products[$i][3] //last name ?> </h6>
 									<div class="d-flex align-items-center justify-content-center mt-2">
