@@ -36,7 +36,8 @@
 						AND merchandise.category = categories.id 
 						AND gallery.merch_id = merchandise.merch_id
 						AND users.phone = merchandise.seller
-						AND user_type = 'vendor'";
+						AND user_type = 'vendor'
+						GROUP BY merchandise.merch_id, merchandise.seller";
 	$products_result = $con->query($products_query);
 	$products_error = false;
 
@@ -547,12 +548,21 @@
 					if ($products_error) {
 						echo "<h1>No Products To Show</h1>";
 					} else {
-						for ($i=0; $i < count($display_products); $i++) { 
+						for ($i=0; $i < $products_result->num_rows; $i++) {
+							$products_result->data_seek($i);
+							$product = $products_result->fetch_assoc();
+							$reviews_sql = "SELECT count(review) AS num_reviews
+											FROM reviews, merchandise 
+											WHERE reviews.seller = merchandise.seller 
+											AND reviews.merch_id = merchandise.merch_id 
+											AND reviews.seller = " . $product['vendor_id'] . " AND reviews.merch_id = " . $product['product_id']; 
+							$reviews_result = $con->query($reviews_sql);
+							$reviews = $reviews_result->fetch_assoc();
 				?>
 						<div class="col-lg-3 col-md-4 col-sm-6 pb-1">
 							<div class="product-item bg-light mb-4">
 								<div class="product-img position-relative overflow-hidden">
-									<img class="img-fluid w-100" style="height: 300px;" src=<?= $display_products[$i][13] //product image ?> alt="<?= $display_products[$i][4] //product name ?>" />
+									<img class="img-fluid w-100" style="height: 300px;" src=<?= $product['image'] //product image ?> alt="<?= $product['name'] //product name ?>" />
 									<div class="product-action">
 										<a class="btn btn-outline-dark btn-square" href=""
 											><i class="fa fa-shopping-cart"></i
@@ -569,26 +579,30 @@
 									</div>
 								</div>
 								<div class="text-center py-4">
-									<form action=<?= "detail.php?product=" . $display_products[$i][1] //product id ?> method="post">
-										<input type="number" style="display: none;" name="vendor_id" value=<?= $display_products[$i][0] //vendor id ?>>
-										<button type="submit" name="get_product" style="border: none; background-color: transparent;"><a class="h6 text-decoration-none text-truncate"><?= $display_products[$i][4] //product name ?></a></button>
+									<form action=<?= "detail.php?product=" . $product['product_id'] //product id ?> method="post">
+										<input type="number" style="display: none;" name="vendor_id" value=<?= $product['vendor_id']  //vendor id ?>>
+										<button type="submit" name="get_product" style="border: none; background-color: transparent;"><a class="h6 text-decoration-none text-truncate"><?= $product['name']  //product name ?></a></button>
 									</form>
-									<h6 style="color: #88D5D7;"> <?= $display_products[$i][2] //first name ?> <?= $display_products[$i][3] //last name ?> </h6>
+									<h6 style="color: #88D5D7;"> <?= $product['first_name']  //first name ?> <?= $product['last_name']  //last name ?> </h6>
 									<div class="d-flex align-items-center justify-content-center mt-2">
-										<h5>E<?= number_format((float)$display_products[$i][9], 2, '.', '') //product price ?></h5>
-										<h6 class="text-muted ml-2"><del><?= number_format((float)$display_products[$i][9], 2, '.', '') //product price ?></del></h6>
+										<h5>E<?= number_format((float)$product['price'] , 2, '.', '') //product price ?></h5>
+										<h6 class="text-muted ml-2"><del><?= number_format((float)$product['price'] , 2, '.', '') //product price ?></del></h6>
 									</div>
 									<div class="d-flex align-items-center justify-content-center mb-1">
 										<?php 
-											for ($j=0; $j < ceil((float)$display_products[$i][10]); $j++) { 
-												if((fmod((float)$display_products[$i][10], 1) !== 0.00) && ($j == ceil((float)$display_products[$i][10]) - 1)) {
+											for ($j=0; $j < ceil((float)$product['quality'] ); $j++) { 
+												if((fmod((float)$product['quality'] , 1) !== 0.00) && ($j == ceil((float)$product['quality'] ) - 1)) {
 													//Above is product quality
 										?>	
 													<small class="fa fa-star-half-alt text-primary mr-1"></small>
 										  <?php } else { ?>
 													<small class="fa fa-star text-primary mr-1"></small>
 										<?php }} ?>
-										<small>(99)</small>
+										<?php 
+											if($reviews['num_reviews']) {
+										?>
+												<small> (<?= $reviews['num_reviews']  ?>) </small>
+										<?php } ?>
 									</div>
 								</div>
 							</div>
@@ -631,18 +645,25 @@
 				<span class="bg-secondary pr-3">Recent Products</span>
 			</h2>
 			<div class="row px-xl-5">
-				<?php 
+			<?php 
 					if ($products_error) {
 						echo "<h1>No Products To Show</h1>";
 					} else {
-						for ($i=0; $i < count($display_products); $i++) { 
-							// $products_result->data_seek($i);
-							// $products = $products_result->fetch_assoc();
+						for ($i=0; $i < $products_result->num_rows; $i++) {
+							$products_result->data_seek($i);
+							$product = $products_result->fetch_assoc();
+							$reviews_sql = "SELECT count(review) AS num_reviews
+											FROM reviews, merchandise 
+											WHERE reviews.seller = merchandise.seller 
+											AND reviews.merch_id = merchandise.merch_id 
+											AND reviews.seller = " . $product['vendor_id'] . " AND reviews.merch_id = " . $product['product_id']; 
+							$reviews_result = $con->query($reviews_sql);
+							$reviews = $reviews_result->fetch_assoc();
 				?>
 						<div class="col-lg-3 col-md-4 col-sm-6 pb-1">
 							<div class="product-item bg-light mb-4">
 								<div class="product-img position-relative overflow-hidden">
-									<img class="img-fluid w-100" style="height: 300px;" src=<?= $display_products[$i][13] //product image ?> alt="<?= $display_products[$i][4] //product name ?>" />
+									<img class="img-fluid w-100" style="height: 300px;" src=<?= $product['image'] //product image ?> alt="<?= $product['name'] //product name ?>" />
 									<div class="product-action">
 										<a class="btn btn-outline-dark btn-square" href=""
 											><i class="fa fa-shopping-cart"></i
@@ -659,31 +680,35 @@
 									</div>
 								</div>
 								<div class="text-center py-4">
-									<form action=<?= "detail.php?product=" . $display_products[$i][1] ?> method="post">
-										<input type="number" style="display: none;" name="vendor_id" value=<?= $display_products[$i][0] ?>>
-										<button type="submit" name="get_product" style="border: none; background-color: transparent;"><a class="h6 text-decoration-none text-truncate"><?= $display_products[$i][4] ?></a></button>
+									<form action=<?= "detail.php?product=" . $product['product_id'] //product id ?> method="post">
+										<input type="number" style="display: none;" name="vendor_id" value=<?= $product['vendor_id']  //vendor id ?>>
+										<button type="submit" name="get_product" style="border: none; background-color: transparent;"><a class="h6 text-decoration-none text-truncate"><?= $product['name']  //product name ?></a></button>
 									</form>
-									<h6 style="color: #88D5D7;"> <?= $display_products[$i][2] //first name ?> <?= $display_products[$i][3] //last name ?> </h6>
+									<h6 style="color: #88D5D7;"> <?= $product['first_name']  //first name ?> <?= $product['last_name']  //last name ?> </h6>
 									<div class="d-flex align-items-center justify-content-center mt-2">
-										<h5>E<?= number_format((float)$display_products[$i][9], 2, '.', '') //product price ?></h5>
-										<h6 class="text-muted ml-2"><del><?= number_format((float)$display_products[$i][9], 2, '.', '') //product price ?></del></h6>
+										<h5>E<?= number_format((float)$product['price'] , 2, '.', '') //product price ?></h5>
+										<h6 class="text-muted ml-2"><del><?= number_format((float)$product['price'] , 2, '.', '') //product price ?></del></h6>
 									</div>
 									<div class="d-flex align-items-center justify-content-center mb-1">
 										<?php 
-											for ($j=0; $j < ceil((float)$display_products[$i][10]); $j++) { 
-												if((fmod((float)$display_products[$i][10], 1) !== 0.00) && ($j == ceil((float)$display_products[$i][10]) - 1)) {
+											for ($j=0; $j < ceil((float)$product['quality'] ); $j++) { 
+												if((fmod((float)$product['quality'] , 1) !== 0.00) && ($j == ceil((float)$product['quality'] ) - 1)) {
 													//Above is product quality
 										?>	
 													<small class="fa fa-star-half-alt text-primary mr-1"></small>
 										  <?php } else { ?>
 													<small class="fa fa-star text-primary mr-1"></small>
 										<?php }} ?>
-										<small>(99)</small>
+										<?php 
+											if($reviews['num_reviews']) {
+										?>
+												<small> (<?= $reviews['num_reviews']  ?>) </small>
+										<?php } ?>
 									</div>
 								</div>
 							</div>
 						</div>
-				<?php }}	?>	
+				<?php }}	?>		
 			</div>
 		</div>
 		<!-- Products End -->
